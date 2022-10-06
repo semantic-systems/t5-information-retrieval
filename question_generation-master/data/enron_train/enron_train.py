@@ -23,10 +23,10 @@ import logging
 import os
 
 import nltk
+
 nltk.download('punkt')
 
 import nlp
-
 
 _CITATION = """\
 @article{enrondataset,
@@ -117,7 +117,7 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
             nlp.SplitGenerator(name=nlp.Split.TRAIN, gen_kwargs={"filepath": downloaded_files["train"]}),
             nlp.SplitGenerator(name=nlp.Split.VALIDATION, gen_kwargs={"filepath": downloaded_files["dev"]}),
         ]
-    
+
     def _get_correct_alignement(self, context, answer):
         """ Some original examples in SQuAD have indices wrong by 1 or 2 character. We test and fix this here.
         This is not needed to Enron, might add it later though.
@@ -135,7 +135,7 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
         #     return start_idx-2, end_idx-2   # When the gold label is off by two character
         # else:
         #     raise ValueError()
-    
+
     def process_qa_text(self, context, question, answer):
         ans_gen_input = f"question: {question}  context: {context}"
         ans_gen_target = f"{answer}"
@@ -143,7 +143,7 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
 
     def process_qg_text(self, context, question, answer):
         answer_text = answer['text'].strip()
-        
+
         if self.config.qg_format == "prepend":
             que_gen_input = f"answer: {answer_text}  context: {context}"
         elif self.config.qg_format == "highlight":
@@ -152,10 +152,10 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
         else:
             start_pos, end_pos = self._get_correct_alignement(context, answer)
             que_gen_input = f"answer: {answer_text} context: {context[:start_pos]} {{hl_token}} {answer_text} {{hl_token}} {context[end_pos:]}"
-        
+
         que_gen_target = f"{question}"
         return {"source_text": que_gen_input, "target_text": que_gen_target, "task": "qg"}
-    
+
     def process_e2e_qg(self, paragraph):
         source_text = f"generate questions: {paragraph['context'].strip()}"
         questions = [qas['question'].strip() for qas in paragraph['qas']]
@@ -165,7 +165,7 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
 
     def process_ans_ext(self, paragraph):
         context = paragraph['context'].strip()
-    
+
         # split into sentences
         sents = nltk.sent_tokenize(context)
 
@@ -207,7 +207,7 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
             target_text = " {sep_token} ".join(ans) + " {sep_token}"
 
             examples.append({'source_text': input_text, "target_text": target_text, "task": "ans_ext"})
-        
+
         return examples
 
     def _generate_examples(self, filepath):
@@ -221,17 +221,17 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
                 title = article.get("title", "").strip()
                 for paragraph in article["paragraphs"]:
                     context = paragraph["context"].strip()
-                    
+
                     if 'ans_ext' in tasks:
                         ans_ext_examples = self.process_ans_ext(paragraph)
                         for example in ans_ext_examples:
-                                yield count, example
-                                count += 1
-                    
+                            yield count, example
+                            count += 1
+
                     if 'e2e_qg' in tasks:
                         yield count, self.process_e2e_qg(paragraph)
                         count += 1
-                    
+
                     for qa in paragraph["qas"]:
                         question = qa["question"].strip()
                         id_ = qa["id"]
@@ -244,7 +244,7 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
                                     answers = [NO_ANSWER["text"]]
                                 yield count, self.process_qa_text(context, question, answers[0])
                                 count += 1
-                            
+
                             if task == 'qg':
                                 if len(qa["answers"]) == 0:
                                     qa["answers"].append(NO_ANSWER)
