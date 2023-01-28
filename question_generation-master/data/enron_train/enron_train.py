@@ -178,9 +178,8 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
                 start, end = (prev_end + 1), (prev_end + len(sent) + 1)
             prev_end = end
             positions.append({'start': start, 'end': end})
-
-        # TODO: Extract more answers?
         # get answers
+
         answers = [qa['answers'][0] if not qa["is_impossible"] else NO_ANSWER for qa in paragraph['qas']]
 
         # get list of answers for each sentence
@@ -241,10 +240,12 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
                         for task in tasks:
                             if task == 'qa':
                                 if len(answers) == 0:
-                                    answers = [NO_ANSWER["text"]]
-                                yield count, self.process_qa_text(context, question, answers[0])
-                                count += 1
-
+                                    yield count, self.process_qa_text(context, question, NO_ANSWER["text"])
+                                    count += 1
+                                else:
+                                    for answer in answers:
+                                        yield count, self.process_qa_text(context, question, answer)
+                                        count += 1
                             if task == 'qg':
                                 if len(qa["answers"]) == 0:
                                     qa["answers"].append(NO_ANSWER)

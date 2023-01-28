@@ -205,14 +205,13 @@ The `e2e-qg` pipeline is for end-to-end question generation. These models can ge
 
 ## Fine-tuning
 
-### Data processing 
-
+### Data processing
 To support different data formats the trainer expects pre-processed cached dataset, so you can process the data the way you want.
-The cached dataset should be saved using `torch.save` and it should return a `dict` with `source_ids`, `target_ids`, `attention_mask` keys from `__getitem__`.
+The cached dataset should be saved using `torch.save` and it should return a `dict` with `input_ids`, `labels`, `attention_mask` keys from `__getitem__`.
 
-- `source_ids`: encoded source text
-- `target_ids`: encoded target text
-- `attention_mask`: attention mask for the `source_ids`
+- `input_ids`: encoded source text
+- `labels`: encoded target text
+- `attention_mask`: attention mask for the `input_ids`
   
 The `T2TDataCollator` takes care of preparing right `input_ids` and `labels`. It also trims the batches dynamically to remove excessive padding tokens, to speed up the training.
 

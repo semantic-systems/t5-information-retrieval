@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 import torch
 import nlp
 from nlp import GenerateMode
-from transformers import T5Tokenizer, BartTokenizer, HfArgumentParser
+from transformers import T5Tokenizer, BartTokenizer, HfArgumentParser, AutoTokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class DataProcessor:
         self.model_type = model_type
         self.hl_token = "<hl>"
 
-        if model_type == "t5":
+        if model_type == "t5" or "flan-t5" in model_type:
             self.sep_token = "<sep>"
         elif model_type == "bart":
             self.sep_token = "<sep>"
@@ -67,7 +67,8 @@ class DataProcessor:
             self.sep_token = "[SEP]"
 
     def process(self, dataset):
-        if self.model_type == "t5":
+        # TODO: Remove this for newer transformers versions
+        if self.model_type == "t5" or "flan-t5" in self.model_type:
             dataset = dataset.map(self._add_eos_examples)
 
         dataset = dataset.map(self._add_special_tokens)
@@ -103,8 +104,8 @@ class DataProcessor:
         )
 
         encodings = {
-            'source_ids': source_encoding['input_ids'],
-            'target_ids': target_encoding['input_ids'],
+            'input_ids': source_encoding['input_ids'],
+            'labels': target_encoding['input_ids'],
             'attention_mask': source_encoding['attention_mask'],
         }
 
@@ -153,6 +154,8 @@ def main():
 
     if data_args.model_type == 't5':
         tokenizer = T5Tokenizer.from_pretrained("t5-base")
+    elif data_args.model_type.startswith("google/flan-t5"):
+        tokenizer = AutoTokenizer.from_pretrained(data_args.model_type)
     else:
         tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
 
@@ -182,7 +185,7 @@ def main():
     train_dataset = processor.process(train_dataset)
     valid_dataset = processor.process(valid_dataset)
 
-    columns = ["source_ids", "target_ids", "attention_mask"]
+    columns = ["input_ids", "labels", "attention_mask"]
     train_dataset.set_format(type='torch', columns=columns)
     valid_dataset.set_format(type='torch', columns=columns)
 
@@ -202,7 +205,10 @@ def main():
     torch.save(valid_dataset, valid_path)
     logger.info(f"saved validation dataset at {valid_path}")
 
-    tokenizer_path = f"{data_args.model_type}_qg_tokenizer"
+    if data_args.model_type.startswith("google/"):
+        tokenizer_path = f"{data_args.model_type.lstrip('google/')}_qg_tokenizer"
+    else:
+        tokenizer_path = f"{data_args.model_type}_qg_tokenizer"
     if not os.path.exists(tokenizer_path):
         os.mkdir(tokenizer_path)
     tokenizer.save_pretrained(tokenizer_path)

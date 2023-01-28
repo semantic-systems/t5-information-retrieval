@@ -1,2 +1,4 @@
 nlp
-transformers==3.0.0
+transformers
+dill==0.3.5.1
+sentencepiece

@@ -30,8 +30,8 @@ class T2TDataCollator():
         Returns:
             A dictionary of tensors
         """
-        input_ids = torch.stack([example['source_ids'] for example in batch])
-        target_ids = torch.stack([example['target_ids'] for example in batch])
+        input_ids = torch.stack([example['input_ids'] for example in batch])
+        target_ids = torch.stack([example['labels'] for example in batch])
         attention_mask = torch.stack([example['attention_mask'] for example in batch])
 
         pad_token_id = self.tokenizer.pad_token_id
@@ -41,7 +41,7 @@ class T2TDataCollator():
             input_ids, attention_mask = trim_batch(input_ids, pad_token_id, attention_mask=attention_mask)
             target_ids = trim_batch(target_ids, pad_token_id)
         
-        if self.model_type == "t5":
+        if self.model_type == "t5" or self.model_type == "flan-t5":
             lm_labels = target_ids.clone()
             decoder_input_ids = self._shift_right_t5(lm_labels)
             if self.mode == 'training':
@@ -52,7 +52,7 @@ class T2TDataCollator():
             if self.mode == 'training':
                 lm_labels[target_ids[:, 1:] == pad_token_id] = -100
 
-        params =  {
+        params = {
             "input_ids": input_ids, 
             "attention_mask": attention_mask,
             "labels": lm_labels,
