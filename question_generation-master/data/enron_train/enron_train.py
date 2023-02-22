@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Lint as: python3
-"""SQUAD: The Stanford Question Answering Dataset."""
+"""Enron E-Mail Dataset"""
 
 from __future__ import absolute_import, division, print_function
 
@@ -39,11 +39,11 @@ _CITATION = """\
 """
 
 _DESCRIPTION = """
-This dataset was collected and prepared by the CALO Project \
+The original dataset was collected and prepared by the CALO Project \
 (A Cognitive Assistant that Learns and Organizes). It contains data from \
 about 150 users, mostly senior management of Enron, organized into folders. \
-The corpus contains a total of about 0.5M messages. \
-The question and answers were annotated by Alexander Pesterev.
+The original corpus contains a total of about 0.5M messages. \
+The question and answers were annotated by Alexander Pesterev. The annotated set contains 50 e-mails.
 """
 
 QG_FORMATS = [
@@ -59,29 +59,27 @@ NO_ANSWER = {
 }
 
 
-class SquadMultitaskConfig(nlp.BuilderConfig):
-    """BuilderConfig for SQUAD."""
+class EnronMultitaskConfig(nlp.BuilderConfig):
+    """BuilderConfig for Enron."""
 
     def __init__(self, qg_format="highlight", **kwargs):
-        """BuilderConfig for SQUAD.
+        """BuilderConfig for Enron.
 
     Args:
       **kwargs: keyword arguments forwarded to super.
     """
-        super(SquadMultitaskConfig, self).__init__(**kwargs)
+        super(EnronMultitaskConfig, self).__init__(**kwargs)
         self.qg_format = qg_format
 
 
-class SquadMultitask(nlp.GeneratorBasedBuilder):
-    """SQUAD: The Stanford Question Answering Dataset. Version 1.1."""
-
+class EnronMultitask(nlp.GeneratorBasedBuilder):
     # TODO: Find a solution to not explicitly write this here
     _URL = "./data/enron_train"
     _DEV_FILE = "valid_output.json"
     _TRAINING_FILE = "train_output.json"
 
     BUILDER_CONFIGS = [
-        SquadMultitaskConfig(
+        EnronMultitaskConfig(
             name=f"{format_}_qg_format",
             version=nlp.Version("1.0.0", "New split API (https://tensorflow.org/datasets/splits)"),
             description="Plain text",
@@ -121,7 +119,6 @@ class SquadMultitask(nlp.GeneratorBasedBuilder):
     def _get_correct_alignement(self, context, answer):
         """ Some original examples in SQuAD have indices wrong by 1 or 2 character. We test and fix this here.
         This is not needed to Enron, might add it later though.
-        TODO: Check if any actions is required here
         """
         gold_text = answer['text']
         start_idx = answer['answer_start']

@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Pesterev"
+  given-names: "Alexander"
+title: "Extractive Question Answering in Business E-Mails Using T5"
+version: 1.0.0
+url: "https://github.com/semantic-systems/t5-information-retrieval"
